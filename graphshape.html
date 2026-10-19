@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>도함수의 그래프로 개형 그리기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF3EC; --panel:#FFFFFF; --ink:#1F2B22; --muted:#5B6B5F; --line:#C9D6C8;
+  --forest:#2E5E3E; --moss:#8DB27A; --chip:#F2F6F0;
+  --sign:#6A4527; --signText:#FFF8EE;
+  --dcol:#C8344A; --fcol:#2D69A6; --sketch:#3F8F4E;
+  --plus:#F6E3CF; --minus:#DCE6F2;
+  --up:#D2741F; --down:#2D69A6; --max:#B83A2E; --min:#6A4CA3;
+  --ok:#2E7D3A; --bad:#B83A2E; --warn:#A86A00;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#141A15; --panel:#1D251F; --ink:#E6EEE6; --muted:#9FB0A3; --line:#34443A;
+    --forest:#9ED19A; --moss:#5E8A52; --chip:#25302A;
+    --sign:#7A5333; --signText:#FFF3E2;
+    --dcol:#F0828F; --fcol:#6FA8E0; --sketch:#8FD39A;
+    --plus:#3A2E22; --minus:#1F2B3A;
+    --up:#F0A050; --down:#6FA8E0; --max:#F07A6E; --min:#B59AE8;
+    --ok:#7ACB82; --bad:#F07A6E; --warn:#E3B04B;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#141A15; --panel:#1D251F; --ink:#E6EEE6; --muted:#9FB0A3; --line:#34443A;
+  --forest:#9ED19A; --moss:#5E8A52; --chip:#25302A;
+  --sign:#7A5333; --signText:#FFF3E2;
+  --dcol:#F0828F; --fcol:#6FA8E0; --sketch:#8FD39A;
+  --plus:#3A2E22; --minus:#1F2B3A;
+  --up:#F0A050; --down:#6FA8E0; --max:#F07A6E; --min:#B59AE8;
+  --ok:#7ACB82; --bad:#F07A6E; --warn:#E3B04B;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:16px;line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding:18px 16px 48px}
+.m{font-family:"Times New Roman",Times,serif;font-style:italic}
+
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;margin-bottom:14px}
+.sign{background:var(--sign);color:var(--signText);border-radius:6px;padding:10px 18px 12px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.sign h1{font-family:"Do Hyeon",sans-serif;font-weight:400;font-size:clamp(24px,4vw,34px);margin:0;line-height:1.15;letter-spacing:.5px}
+.sign p{margin:2px 0 0;font-size:14px;opacity:.9}
+.hdrNote{flex:1;min-width:240px;display:flex;align-items:center;font-size:16px;color:var(--muted)}
+.hdrNote b{color:var(--ink)}
+
+nav.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+nav.tabs button{font-family:"Do Hyeon",sans-serif;font-size:19px;font-weight:400}
+nav.tabs button[aria-selected="true"]{background:var(--forest);color:var(--panel);border-color:var(--forest)}
+nav.tabs .num{display:inline-block;width:24px;height:24px;line-height:24px;border-radius:50%;border:1px solid currentColor;font-size:14px;text-align:center;margin-right:6px;font-family:"Noto Sans KR",sans-serif}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.chartCard{padding:8px 8px 4px;margin-top:10px}
+svg{display:block;width:100%;height:auto}
+h2{font-family:"Do Hyeon",sans-serif;font-weight:400;font-size:22px;margin:0 0 6px}
+.hint{font-size:14px;color:var(--muted);margin:0 0 10px}
+
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:9px 14px;min-height:44px}
+button:hover{border-color:var(--forest)}
+button:focus-visible,input:focus-visible,[data-tok]:focus-visible{outline:3px solid var(--up);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:var(--forest);color:var(--panel);border-color:var(--forest);font-weight:700}
+
+/* 단계 안내 */
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;padding:0;list-style:none;font-size:14px}
+.steps li{padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.steps li.now{border-color:var(--forest);background:var(--forest);color:var(--panel);font-weight:700}
+.steps li.done{color:var(--ok);border-color:var(--ok)}
+.guide{font-size:18px;margin:0 0 10px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.fb{margin-top:10px;padding:8px 12px;border-radius:6px;background:var(--chip);font-size:16px}
+.fb:empty{display:none}
+.fb .ok{color:var(--ok);font-weight:700}
+.fb .bad{color:var(--bad);font-weight:700}
+
+.sliders{display:grid;gap:4px;margin:8px 2px 0}
+.sl{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center;font-size:15px}
+.sl span{color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--forest);height:30px}
+input[type=range]:disabled{opacity:.4}
+.snap{min-height:26px;font-size:16px;font-weight:700;color:var(--forest);margin:2px 2px 0}
+@media (max-width:600px){.sl{grid-template-columns:1fr}}
+
+[data-tok]{cursor:pointer}
+
+/* 발견 노트 */
+.note{margin-top:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:8px 0}
+.dcard{border:2px solid var(--moss);border-radius:10px;padding:10px;background:var(--chip);position:relative}
+.dcard.missing{border-style:dashed;border-color:var(--line);background:transparent;color:var(--muted)}
+.dcard.sel{outline:3px solid var(--up);outline-offset:2px}
+.dcard .no{font-family:"Do Hyeon",sans-serif;font-size:18px}
+.dcard .pics{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:4px 0}
+.dcard .pics svg{background:var(--panel);border-radius:6px;border:1px solid var(--line)}
+.dcard p{margin:2px 0;font-size:14px;line-height:1.45}
+.dcard .rel{font-weight:700;font-size:15px}
+.dcard .badge{display:inline-block;font-size:12px;border:1px solid var(--forest);color:var(--forest);border-radius:999px;padding:0 8px;margin:2px 4px 0 0}
+.dcard .selBtn{min-height:34px;padding:2px 10px;font-size:14px;margin-top:6px}
+.emptyNote{color:var(--muted);font-size:15px;grid-column:1/-1;margin:0}
+.reveal{margin-top:8px;padding:10px 14px;border-left:4px solid var(--warn);background:var(--chip);border-radius:4px}
+.compare{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+
+details.caution{border:2px solid var(--warn);border-radius:10px;padding:10px 16px;margin-top:14px;background:var(--panel)}
+details.caution summary{font-family:"Do Hyeon",sans-serif;font-size:21px;color:var(--warn);cursor:pointer}
+details.caution li{margin:6px 0}
+
+/* 53쪽 표 */
+.tblWrap{overflow-x:auto}
+table{border-collapse:collapse;font-size:16px;min-width:100%}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:center}
+th{background:var(--chip);font-weight:500}
+.sheet{min-width:720px}
+.sheet th.rowh{min-width:96px}
+.sheet td{padding:4px;vertical-align:middle}
+.sheet td.lock{color:var(--muted);font-size:13px;background:repeating-linear-gradient(45deg,transparent 0 8px,var(--chip) 8px 16px)}
+.sheet td.auto svg{width:150px;max-width:100%;margin:0 auto}
+.cellBtn{width:100%;min-height:52px;padding:4px 6px;font-size:15px;border-style:dashed;background:transparent}
+.cellBtn.filled{border-style:solid;background:var(--panel)}
+.cellBtn.right{border:2px solid var(--ok)}
+.cellBtn.wrong{border:2px solid var(--bad);background:color-mix(in srgb,var(--bad) 8%,transparent)}
+.cellBtn.shown{border:2px dashed var(--warn)}
+.cellBtn .shownTag{display:block;font-size:12px;color:var(--warn);font-weight:700}
+.cellBtn .ph{color:var(--muted);font-size:14px}
+.sheetHead{font-size:17px;margin:4px 0 8px}
+.scoreLine{font-size:17px;font-weight:700;margin-left:4px}
+
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:16px;max-width:min(560px,94vw);width:100%}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog h2{font-size:19px;font-family:"Noto Sans KR",sans-serif;font-weight:500}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0}
+.pick button{font-size:16px}
+
+/* 퀴즈 */
+.qMeta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:15px;margin-bottom:6px}
+.progress{height:8px;background:var(--chip);border-radius:999px;overflow:hidden;margin-bottom:12px}
+.progress div{height:100%;background:var(--moss);transition:width .3s}
+.qText{font-size:19px;font-weight:500;margin:0 0 10px}
+.qFig{max-width:420px;margin:0 auto 10px;border:1px solid var(--line);border-radius:8px;padding:6px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.opts button{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:17px;min-height:56px}
+.opts svg{width:150px}
+.opts button.right{border:3px solid var(--ok)}
+.opts button.wrong{border:3px solid var(--bad)}
+.feedback{margin-top:12px;padding:10px 14px;border-radius:6px;background:var(--chip);font-size:16px}
+.feedback .ok{color:var(--ok);font-weight:700}
+.feedback .bad{color:var(--bad);font-weight:700}
+.final{text-align:center;padding:20px 10px}
+.final .big{font-family:"Do Hyeon",sans-serif;font-size:56px;line-height:1.1;color:var(--forest)}
+.reviewList{text-align:left;max-width:640px;margin:12px auto;font-size:15px}
+
+.sign{cursor:default;user-select:none;-webkit-user-select:none}
+.teacher{margin-top:24px;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.teacher button{min-height:32px;padding:2px 10px;font-size:13px}
+.hidden{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="sign">
+      <h1>도함수의 그래프로 개형 그리기</h1>
+      <p>미적분Ⅰ 6. 함수의 그래프 (교과서 93쪽, 학습지 53쪽)</p>
+    </div>
+    <div class="hdrNote"><span><b><span class="m">y</span>=<span class="m">f</span> ′(<span class="m">x</span>)의 그래프만 보고 <span class="m">y</span>=<span class="m">f</span>(<span class="m">x</span>)의 개형을 알 수 있을까?</b> 그래프를 직접 움직이며 가능한 경우를 모두 찾아보세요.</span></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="cubic"><span class="num">1</span>삼차함수에서 찾기</button>
+    <button role="tab" aria-selected="false" data-tab="quart"><span class="num">2</span>사차함수에서 찾기</button>
+    <button role="tab" aria-selected="false" data-tab="sheet"><span class="num">3</span>53쪽 표 정리</button>
+    <button role="tab" aria-selected="false" data-tab="quiz"><span class="num">4</span>개형 맞히기</button>
+  </nav>
+
+  <!-- 1, 2: 발견 -->
+  <section id="explore">
+    <div class="card">
+      <ol class="steps" id="steps"></ol>
+      <p class="guide" id="guide"></p>
+      <div class="actions" id="actions"></div>
+      <div class="fb" id="fb" aria-live="polite"></div>
+    </div>
+    <div class="sliders">
+      <label class="sl"><span>위아래로 움직이기</span><input type="range" id="sSl" min="0" max="1000" value="500"></label>
+      <label class="sl" id="wRow"><span>굴곡의 크기</span><input type="range" id="wSl" min="0" max="1000" value="750"></label>
+    </div>
+    <div class="snap" id="snap" aria-live="polite"></div>
+    <div class="card chartCard"><svg id="exSvg" viewBox="0 0 1000 600" role="img" aria-label="도함수의 그래프와 함수의 개형"></svg></div>
+
+    <div class="card note">
+      <h2>발견 노트</h2>
+      <p class="hint" id="noteHint"></p>
+      <div class="cards" id="cards"></div>
+      <div class="actions"><button id="allBtn">더 이상 새로운 경우가 없어요!</button></div>
+      <div id="revealBox"></div>
+      <div id="compareBox"></div>
+    </div>
+
+    <details class="caution">
+      <summary>자주 하는 실수</summary>
+      <ul id="cautionList"></ul>
+    </details>
+  </section>
+
+  <!-- 3: 53쪽 표 -->
+  <section id="sheet" class="hidden">
+    <div class="card">
+      <h2>학습지 53쪽 표 정리</h2>
+      <p class="hint">1, 2번에서 내가 발견한 경우가 표의 열로 들어와요. 그래프는 발견 노트에서 자동으로 채워지고, 나머지 칸은 눌러서 고르세요. 아직 찾지 못한 경우는 잠겨 있어요.</p>
+      <div class="sheetHead">◉ <span class="m">f</span>(<span class="m">x</span>)=<span class="m">ax</span><sup>3</sup>+<span class="m">bx</span><sup>2</sup>+<span class="m">cx</span>+<span class="m">d</span> (<span class="m">a</span>&gt;0)</div>
+      <div class="tblWrap"><table class="sheet" id="sheetC"></table></div>
+      <div class="sheetHead" style="margin-top:18px">◉ <span class="m">f</span>(<span class="m">x</span>)=<span class="m">ax</span><sup>4</sup>+<span class="m">bx</span><sup>3</sup>+<span class="m">cx</span><sup>2</sup>+<span class="m">dx</span>+<span class="m">e</span> (<span class="m">a</span>&gt;0)</div>
+      <div class="tblWrap"><table class="sheet" id="sheetQ"></table></div>
+      <div class="actions" style="margin-top:14px;align-items:center">
+        <button class="primary" id="gradeBtn">채점하기</button>
+        <button id="showAnsBtn">정답 보기</button>
+        <button id="clearBtn">고른 답 지우기</button>
+        <span class="scoreLine" id="sheetScore" aria-live="polite"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4: 퀴즈 -->
+  <section id="quiz" class="hidden">
+    <div class="card" id="quizCard"></div>
+  </section>
+
+  <div class="teacher hidden" id="teacher">
+    <span>선생님용</span>
+    <button id="tFill">시연용: 발견 노트와 표 모두 채우기</button>
+    <button id="tReset">처음부터 다시 (기록 모두 지우기)</button>
+    <button id="tHide">선생님용 숨기기</button>
+    <div class="fb" id="tFb" style="flex-basis:100%;margin-top:4px"></div>
+  </div>
+</div>
+
+<dialog id="picker">
+  <h2 id="pickTitle">알맞은 것을 고르세요</h2>
+  <div class="pick" id="pickOpts"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button id="pickClear">비우기</button>
+    <button id="pickClose">닫기</button>
+  </div>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const A='<span class="m">α</span>',B='<span class="m">β</span>',G='<span class="m">γ</span>';
+const xm='<span class="m">x</span>',fp='<span class="m">f</span> ′(<span class="m">x</span>)';
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+/* ===== 다항식 도구 (퀴즈용) ===== */
+function pmul(a,b){const r=new Array(a.length+b.length-1).fill(0);a.forEach((x,i)=>b.forEach((y,j)=>r[i+j]+=x*y));return r}
+function pint(a){return [0,...a.map((c,i)=>c/(i+1))]}
+function peval(a,x){let s=0;for(let i=a.length-1;i>=0;i--)s=s*x+a[i];return s}
+function makeFn(roots,quad,lead){let d=[lead||1];roots.forEach(r=>d=pmul(d,[-r,1]));if(quad)d=pmul(d,quad);const f=pint(d);return {d:x=>peval(d,x),f:x=>peval(f,x)}}
+
+/* ===== 그림 도구 ===== */
+function sampleRange(fn,xr,incl0){
+  let lo=Infinity,hi=-Infinity;
+  for(let i=0;i<=200;i++){const y=fn(xr[0]+(xr[1]-xr[0])*i/200);lo=Math.min(lo,y);hi=Math.max(hi,y)}
+  if(incl0){lo=Math.min(lo,0);hi=Math.max(hi,0)}
+  const p=(hi-lo)*0.1||1;return [lo-p,hi+p];
+}
+function pathOf(fn,X,Y,xr,n){let s='';for(let i=0;i<=n;i++){const x=xr[0]+(xr[1]-xr[0])*i/n;s+=(i?'L':'M')+X(x).toFixed(1)+','+Y(fn(x)).toFixed(1)}return s}
+function thumb(fn,xr,opt){
+  opt=opt||{};const W=160,H=100,pad=8;
+  const yr=opt.yr||sampleRange(fn,opt.fx||xr,opt.axis);
+  const X=x=>pad+(x-xr[0])/(xr[1]-xr[0])*(W-2*pad);
+  const Y=y=>H-pad-(y-yr[0])/(yr[1]-yr[0])*(H-2*pad);
+  let s=`<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
+  if(opt.axis){const y0=Y(0);s+=`<line x1="${pad-4}" y1="${y0}" x2="${W-pad+2}" y2="${y0}" stroke="var(--muted)" stroke-width="1.5"/><path d="M${W-pad+2},${y0} l-6,-3 v6z" fill="var(--muted)"/>`}
+  s+=`<path d="${pathOf(fn,X,Y,xr,80)}" fill="none" stroke="${opt.color||'var(--fcol)'}" stroke-width="${opt.sw||3.2}" stroke-linecap="round"/>`;
+  return s+'</svg>';
+}
+const bisect=(g,a,b)=>{let fa=g(a);for(let i=0;i<60;i++){const m=(a+b)/2,fm=g(m);if((fm<0)===(fa<0)){a=m;fa=fm}else b=m}return (a+b)/2};
+
+/* ===== 두 모드의 설정 ===== */
+const H0=0.2;
+const MODE={
+  cubic:{name:'삼차함수',xr:[-1.8,2.2],dy:[-1.6,3.0],sR:[-1.2,1.0],sInit:0.75,cats:['2','d','0'],
+    intro:`최고차항의 계수가 양수인 삼차함수 <span class="m">f</span>(<span class="m">x</span>)의 도함수 <span class="m">y</span>=${fp}의 그래프는 아래로 볼록한 포물선이에요.`},
+  quart:{name:'사차함수',xr:[-2.1,2.1],dy:[-2.6,2.6],sR:[-2,2],wR:[0,2.4],sInit:0.5,wInit:0.75,cats:['3','d','t','1'],
+    intro:`최고차항의 계수가 양수인 사차함수 <span class="m">f</span>(<span class="m">x</span>)의 도함수 <span class="m">y</span>=${fp}의 그래프는 삼차함수의 그래프예요. 굴곡의 크기도 바꿀 수 있어요.`}
+};
+const CAT={
+  cubic:{
+    '2':{rel:'<span class="m">x</span>축과 서로 다른 두 점에서 만나요.',root:`서로 다른 두 실근 ${A}, ${B}`,ext:`${xm}=${A}에서 극대, ${xm}=${B}에서 극소`,hint:'포물선을 아래로 내려 보세요.'},
+    'd':{rel:'<span class="m">x</span>축에 접해요.',root:`중근 ${A}`,ext:'극값이 없어요.',hint:'포물선을 천천히 움직여 <span class="m">x</span>축에 딱 닿게 해 보세요.'},
+    '0':{rel:'<span class="m">x</span>축과 만나지 않아요.',root:'서로 다른 두 허근',ext:'극값이 없어요.',hint:'포물선을 <span class="m">x</span>축보다 위로 올려 보세요.'}},
+  quart:{
+    '3':{rel:'<span class="m">x</span>축과 서로 다른 세 점에서 만나요.',root:`서로 다른 세 실근 ${A}, ${B}, ${G}`,ext:`${xm}=${A}, ${xm}=${G}에서 극소, ${xm}=${B}에서 극대`,hint:'굴곡을 크게 하고 그래프를 <span class="m">x</span>축 근처에 두어 보세요.'},
+    'd':{rel:'<span class="m">x</span>축과 한 점에서 만나고, 다른 한 점에서 접해요.',root:`한 실근 ${A}와 중근 ${B}`,ext:`${xm}=${A}에서 극소`,hint:'굴곡의 봉우리나 골짜기가 <span class="m">x</span>축에 딱 닿게 해 보세요.'},
+    't':{rel:'<span class="m">x</span>축과 한 점에서 만나는데, 그 점에서 평평하게 지나가요.',root:`삼중근 ${A}`,ext:`${xm}=${A}에서 극소`,hint:'굴곡의 크기를 0으로 만든 뒤 <span class="m">x</span>축에 딱 맞춰 보세요.'},
+    '1':{rel:'<span class="m">x</span>축과 한 점에서만 만나요.',root:`한 실근 ${A}와 서로 다른 두 허근`,ext:`${xm}=${A}에서 극소`,hint:'그래프를 위나 아래로 많이 움직여 보세요.'}}
+};
+
+// 슬라이더 값 → 실제 그래프 (자석처럼 달라붙기 포함)
+function analyze(mode,sRaw,wRaw){
+  const T=0.07;
+  if(mode==='cubic'){
+    const s=Math.abs(sRaw)<T?0:sRaw;
+    const d=x=>(x-H0)*(x-H0)+s,f=x=>Math.pow(x-H0,3)/3+s*x;
+    let roots,cat,snap='';
+    if(s<0){const r=Math.sqrt(-s);roots=[{x:H0-r,m:1,n:'α'},{x:H0+r,m:1,n:'β'}];cat='2'}
+    else if(s===0){roots=[{x:H0,m:2,n:'α'}];cat='d';snap='딱 맞았어요! 포물선이 x축에 닿았어요.'}
+    else{roots=[];cat='0'}
+    return finish({mode,s,w:0,d,f,roots,cat,snap});
+  }
+  let w=wRaw<0.08?0:wRaw;const r0=Math.sqrt(w/3),m0=w>0?(2*w/3)*r0:0;
+  let s=sRaw,snap=w===0?'굴곡이 없어졌어요.':'';
+  if(w===0&&Math.abs(sRaw)<T){s=0}
+  else if(w>0&&Math.abs(sRaw-m0)<T)s=m0;
+  else if(w>0&&Math.abs(sRaw+m0)<T)s=-m0;
+  const d=x=>x*x*x-w*x+s,f=x=>x*x*x*x/4-w*x*x/2+s*x;
+  let roots,cat,sub=null;
+  if(w===0&&s===0){roots=[{x:0,m:3,n:'α'}];cat='t';snap='딱 맞았어요! 굴곡이 없는 그래프가 x축에 딱 맞았어요.'}
+  else if(w>0&&s===m0){roots=[{x:-2*r0,m:1,n:'α'},{x:r0,m:2,n:'β'}];cat='d';sub='R';snap='딱 맞았어요! 골짜기가 x축에 닿았어요.'}
+  else if(w>0&&s===-m0){roots=[{x:-r0,m:2,n:'β'},{x:2*r0,m:1,n:'α'}];cat='d';sub='L';snap='딱 맞았어요! 봉우리가 x축에 닿았어요.'}
+  else if(w>0&&Math.abs(s)<m0){roots=[{x:bisect(d,-3,-r0),m:1,n:'α'},{x:bisect(d,-r0,r0),m:1,n:'β'},{x:bisect(d,r0,3),m:1,n:'γ'}];cat='3'}
+  else{roots=[{x:bisect(d,-3,3),m:1,n:'α'}];cat='1'}
+  return finish({mode,s,w,d,f,roots,cat,sub,snap});
+}
+function finish(o){
+  const xs=o.roots.map(r=>r.x),n=xs.length;
+  o.ints=[];
+  for(let i=0;i<=n;i++){
+    const t=n===0?0:i===0?xs[0]-0.3:i===n?xs[n-1]+0.3:(xs[i-1]+xs[i])/2;
+    o.ints.push({a:i===0?-Infinity:xs[i-1],b:i===n?Infinity:xs[i],s:o.d(t)>0?1:-1});
+  }
+  o.roots.forEach((r,i)=>{const L=o.ints[i].s,R=o.ints[i+1].s;r.type=(L>0&&R<0)?'max':(L<0&&R>0)?'min':'none'});
+  const xr=MODE[o.mode].xr;
+  o.fx=xr;
+  return o;
+}
+
+/* ===== 상태 ===== */
+const STORE='graphshape_v2';
+let DB={found:{cubic:{},quart:{}},revealed:{cubic:false,quart:false},grouped:false,sheet:{C:null,Q:null}};
+try{const t=JSON.parse(localStorage.getItem(STORE));if(t&&t.found)DB=Object.assign(DB,t)}catch(e){}
+const save=()=>{try{localStorage.setItem(STORE,JSON.stringify(DB))}catch(e){}};
+
+const EX={mode:'cubic',sv:{cubic:0,quart:0},wv:0,stage:0,st:null,signs:[],arrows:[],pts:[],bad:{}};
+function sliderToS(){const R=MODE[EX.mode].sR;return R[0]+(R[1]-R[0])*(+$('sSl').value)/1000}
+function sliderToW(){const R=MODE.quart.wR;return R[0]+(R[1]-R[0])*(+$('wSl').value)/1000}
+function current(){return analyze(EX.mode,sliderToS(),EX.mode==='quart'?sliderToW():0)}
+
+const STEP_NAMES=['그래프 정하기','부호 붙이기','증가·감소 화살표','극값 판단','비교하고 기록'];
+const CAUTION={
+ cubic:[
+  `<b><span class="m">f</span> ′(<span class="m">a</span>)=0이라고 해서 반드시 극값은 아니에요.</b> 포물선이 <span class="m">x</span>축에 접할 때는 접점의 좌우에서 부호가 모두 +로 같아서 극값이 없어요.`,
+  `<b><span class="m">y</span>=${fp}의 그래프의 꼭짓점은 극값과 관계없어요.</b> 봐야 할 것은 그래프의 높낮이가 아니라 <span class="m">x</span>축보다 위(+)인지 아래(−)인지예요.`,
+  `<b>실수 전체에서 증가할 조건은 <span class="m">D</span>&lt;0이 아니라 <span class="m">D</span>≤0이에요.</b> <span class="m">D</span>=0(중근)일 때도 증가함수예요.`],
+ quart:[
+  `<b>삼중근이면 극값이 없다고 착각하기 쉬워요.</b> 삼중근 ${A}의 좌우에서 부호가 −에서 +로 바뀌므로 <span class="m">x</span>=${A}에서 극소예요.`,
+  `<b>중근 ${B}에서는 극값이 없어요.</b> ${B}의 좌우에서 ${fp}의 부호가 바뀌지 않아 그래프가 잠깐 평평해졌다가 같은 방향으로 계속 가요.`,
+  `<b>최고차항의 계수가 양수인 사차함수는 어떤 경우든 극솟값을 가져요.</b> 극댓값은 서로 다른 세 실근일 때만 있어요.`]
+};
+
+function setMode(m){
+  EX.mode=m;
+  $('wRow').classList.toggle('hidden',m!=='quart');
+  const M=MODE[m];
+  $('sSl').value=Math.round((M.sInit-M.sR[0])/(M.sR[1]-M.sR[0])*1000);
+  if(m==='quart')$('wSl').value=Math.round(M.wInit*1000);
+  $('cautionList').innerHTML=CAUTION[m].map(t=>`<li>${t}</li>`).join('');
+  $('noteHint').innerHTML=`${fp}의 그래프와 <span class="m">x</span>축의 관계가 다른 상황을 찾을 때마다 기록돼요. ${M.name}에서는 모두 몇 가지 경우가 있을까요?`;
+  toStage(0);renderNote();
+}
+function toStage(k){
+  EX.stage=k;EX.bad={};
+  if(k===0){EX.st=null;EX.signs=[];EX.arrows=[];EX.pts=[];$('fb').innerHTML=''}
+  $('sSl').disabled=k>0;$('wSl').disabled=k>0;
+  renderGuide();draw();
+}
+function renderGuide(){
+  const k=EX.stage,M=MODE[EX.mode];
+  $('steps').innerHTML=STEP_NAMES.map((n,i)=>`<li class="${i===k?'now':i<k?'done':''}">${i+1}. ${n}</li>`).join('');
+  const g=[
+    `${M.intro} 슬라이더로 그래프를 움직여 보고, <span class="m">x</span>축과의 관계가 달라지는 곳에서 멈춘 뒤 <b>이 그래프로 시작</b>을 누르세요.`,
+    `위 그래프의 각 구간에 있는 <b>?</b>를 눌러 ${fp}의 부호(+ 또는 −)를 정하세요.`,
+    `${fp}의 부호에 맞게 아래쪽 <b>?</b>를 눌러 <span style="color:var(--up)">↗(증가)</span> 또는 <span style="color:var(--down)">↘(감소)</span>를 정하세요. 모두 정하면 나의 개형이 그려져요.`,
+    `내가 그린 개형에서 각 점이 <b>극대</b>인지, <b>극소</b>인지, <b>극값이 아닌지</b> 눌러서 정하세요.`,
+    `초록 점선은 내가 만든 개형, 파란 선은 실제 <span class="m">y</span>=<span class="m">f</span>(<span class="m">x</span>)의 그래프예요. 모양이 같은가요? 같다면 발견 노트에 기록하세요.`][k];
+  $('guide').innerHTML=g;
+  const a=$('actions');a.innerHTML='';
+  const btn=(t,fn,cls)=>{const b=document.createElement('button');b.innerHTML=t;if(cls)b.className=cls;b.onclick=fn;a.appendChild(b);return b};
+  if(k===0)btn('이 그래프로 시작',startExplore,'primary');
+  if(k===1)btn('부호 확인',checkSigns,'primary');
+  if(k===2)btn('화살표 확인',checkArrows,'primary');
+  if(k===3)btn('극값 확인',checkPts,'primary');
+  if(k===4){EX.recBtn=btn('발견 노트에 기록',record,'primary')}
+  if(k>0)btn('다시 움직이기',()=>{if(EX.stage===4&&EX.recBtn&&EX.recBtn.disabled){toStage(0);return}$('fb').innerHTML='<b style="color:var(--warn)">1. 그래프 정하기 단계로 돌아갑니다.</b> 지금까지 정한 부호, 화살표, 극값 판단이 모두 지워져요. 정말 돌아갈까요?<div class="actions" style="margin-top:8px"><button class="primary" id="backYes">네, 돌아갈게요</button><button id="backNo">아니요, 계속할게요</button></div>';$('backYes').onclick=()=>toStage(0);$('backNo').onclick=()=>{$('fb').innerHTML=''};$('backNo').focus()});
+}
+function startExplore(){
+  EX.st=current();
+  EX.signs=EX.st.ints.map(()=>null);EX.arrows=EX.st.ints.map(()=>null);EX.pts=EX.st.roots.map(()=>null);
+  $('fb').innerHTML='';toStage(1);
+}
+function markWrong(kind,arr,truth){
+  EX.bad={};let w=0,empty=0;
+  arr.forEach((v,i)=>{if(v===null)empty++;else if(v!==truth[i]){EX.bad[kind+i]=1;w++}});
+  return {w,empty};
+}
+function checkSigns(){
+  const truth=EX.st.ints.map(iv=>iv.s>0?'+':'−'),r=markWrong('sign',EX.signs,truth);
+  if(r.empty){$('fb').innerHTML='<span class="bad">아직 정하지 않은 구간이 있어요.</span>';draw();return}
+  if(r.w){$('fb').innerHTML=`<span class="bad">빨간 칸을 다시 보세요.</span> 그래프가 <span class="m">x</span>축보다 위에 있으면 ${fp}&gt;0, 아래에 있으면 ${fp}&lt;0이에요.`;draw();return}
+  $('fb').innerHTML='<span class="ok">맞았어요!</span> 부호가 같은 구간끼리 색으로 칠해졌어요.';toStage(2);
+}
+function checkArrows(){
+  const truth=EX.st.ints.map(iv=>iv.s>0?'up':'down'),r=markWrong('arrow',EX.arrows,truth);
+  if(r.empty){$('fb').innerHTML='<span class="bad">아직 정하지 않은 구간이 있어요.</span>';draw();return}
+  if(r.w){$('fb').innerHTML=`<span class="bad">빨간 칸을 다시 보세요.</span> ${fp}&gt;0인 구간에서 <span class="m">f</span>(<span class="m">x</span>)는 증가하고, ${fp}&lt;0인 구간에서 감소해요.`;draw();return}
+  if(!EX.st.roots.length){$('fb').innerHTML=`<span class="ok">맞았어요!</span> ${fp}=0을 만족하는 <span class="m">x</span>가 없으니 극값을 판단할 점이 없어요. 실제 그래프와 비교해 보세요.`;toStage(4);return}
+  $('fb').innerHTML='<span class="ok">맞았어요!</span> 화살표대로 나의 개형이 그려졌어요.';toStage(3);
+}
+function checkPts(){
+  const truth=EX.st.roots.map(r=>r.type),r=markWrong('pt',EX.pts,truth);
+  if(r.empty){$('fb').innerHTML='<span class="bad">아직 정하지 않은 점이 있어요.</span>';draw();return}
+  if(r.w){$('fb').innerHTML=`<span class="bad">빨간 칸을 다시 보세요.</span> 그 점의 좌우에서 ${fp}의 부호가 +에서 −로 바뀌면 극대, −에서 +로 바뀌면 극소, 바뀌지 않으면 극값이 아니에요.`;draw();return}
+  const hasNone=EX.st.roots.some(p=>p.type==='none');
+  $('fb').innerHTML='<span class="ok">맞았어요!</span>'+(hasNone?` <span class="m">f</span> ′(<span class="m">x</span>)=0이지만 극값이 아닌 점도 있었네요.`:'');
+  toStage(4);
+}
+function record(){
+  const st=EX.st,F=DB.found[EX.mode],c=F[st.cat];
+  let msg;
+  if(!c){
+    const k=Object.keys(F).length+1;
+    F[st.cat]={s:st.s,w:st.w,subs:st.sub?[st.sub]:[],order:k};
+    msg=`<span class="ok">새로운 경우를 발견했어요! (발견 ${k})</span> 이 경우를 방정식 <span class="m">f</span> ′(<span class="m">x</span>)=0의 근으로 나타내면 <b>${CAT[EX.mode][st.cat].root}</b>입니다.`;
+  }else if(st.sub&&!c.subs.includes(st.sub)){
+    c.subs.push(st.sub);
+    msg=`<span class="ok">같은 경우지만 접하는 위치가 달라요!</span> 발견 ${c.order} 카드에 함께 기록했어요. 접하는 위치가 달라져도 극값은 어떻게 되었나요?`;
+  }else msg=`이미 찾은 경우예요(발견 ${c.order}). <span class="m">x</span>축과의 관계가 다른 상황을 찾아보세요.`;
+  save();renderNote();
+  $('fb').innerHTML=msg;
+  if(EX.recBtn){EX.recBtn.disabled=true;EX.recBtn.textContent='기록했어요'}
+  const a=$('actions'),nb=document.createElement('button');nb.className='primary';nb.textContent='다른 경우 찾으러 가기';nb.onclick=()=>toStage(0);a.prepend(nb);
+}
+
+/* ===== 그리기 ===== */
+const GX0=150,GX1=965,T=[22,270],BT=[332,585];
+function tokSvg(x,y,w,label,col,kind,i,state){
+  const K=($('exSvg').clientWidth||1000)<620?1.7:1;w*=K;
+  const st=state==='bad'?'var(--bad)':state==='ok'?'var(--ok)':label==='?'?'var(--forest)':'var(--line)';
+  return `<g data-tok="${kind}" data-i="${i}" tabindex="0" role="button" aria-label="${label==='?'?'정하지 않음':label} 바꾸기">
+    <rect x="${x-w/2}" y="${y-22*K}" width="${w}" height="${44*K}" rx="9" fill="var(--panel)" stroke="${st}" stroke-width="${(state?3:2)*K}" ${label==='?'?'stroke-dasharray="5 4"':''}/>
+    <text x="${x}" y="${y+(label.length>2?7:10)*K}" text-anchor="middle" font-size="${(label.length>2?18:28)*K}" font-weight="700" fill="${col}">${label}</text></g>`;
+}
+function draw(){
+  const st=EX.stage>0?EX.st:current(),M=MODE[EX.mode],xr=M.xr,k=EX.stage;
+  $('snap').textContent=k===0?st.snap:'';
+  const X=x=>GX0+(x-xr[0])/(xr[1]-xr[0])*(GX1-GX0);
+  const dR=M.dy,YD=y=>T[1]-(y-dR[0])/(dR[1]-dR[0])*(T[1]-T[0]);
+  const xb=st.roots.map(r=>X(r.x));
+  const ivPx=st.ints.map((iv,i)=>[i===0?GX0:xb[i-1],i===st.ints.length-1?GX1:xb[i]]);
+  let s='';
+  // 부호 구간 색 (부호를 맞힌 뒤)
+  if(k>=2)st.ints.forEach((iv,i)=>{s+=`<rect x="${ivPx[i][0]}" y="8" width="${ivPx[i][1]-ivPx[i][0]}" height="586" fill="${iv.s>0?'var(--plus)':'var(--minus)'}"/>`});
+  s+=`<line x1="20" y1="301" x2="980" y2="301" stroke="var(--line)" stroke-width="1.5"/>`;
+  const y0=YD(0);
+  s+=`<line x1="${GX0-10}" y1="${y0}" x2="${GX1+16}" y2="${y0}" stroke="var(--muted)" stroke-width="2"/><path d="M${GX1+22},${y0} l-12,-6 v12z" fill="var(--muted)"/><text x="${GX1+8}" y="${y0+24}" class="m" font-size="22" fill="var(--muted)">x</text>`;
+  if(k>=1)st.roots.forEach((r,i)=>{s+=`<line x1="${xb[i]}" y1="${y0}" x2="${xb[i]}" y2="${BT[1]}" stroke="var(--muted)" stroke-width="1.6" stroke-dasharray="5 5"/>`});
+  s+=`<clipPath id="cpT"><rect x="0" y="${T[0]-12}" width="1000" height="${T[1]-T[0]+24}"/></clipPath>`;
+  s+=`<path clip-path="url(#cpT)" d="${pathOf(st.d,X,YD,xr,240)}" fill="none" stroke="var(--dcol)" stroke-width="4" stroke-linecap="round"/>`;
+  st.roots.forEach((r,i)=>{
+    s+=`<circle cx="${xb[i]}" cy="${y0}" r="6" fill="var(--dcol)"/>`;
+    if(k>=1)s+=`<text x="${xb[i]-14}" y="${y0+28}" text-anchor="middle" class="m" font-size="24" fill="var(--ink)">${r.n}</text>`;
+  });
+  s+=`<rect x="14" y="14" width="120" height="32" rx="6" fill="var(--panel)" stroke="var(--dcol)"/><text x="74" y="37" text-anchor="middle" font-size="19" fill="var(--dcol)" font-family="Times New Roman,serif" font-style="italic">y=f ′(x)</text>`;
+  s+=`<rect x="14" y="316" width="120" height="32" rx="6" fill="var(--panel)" stroke="var(--fcol)"/><text x="74" y="339" text-anchor="middle" font-size="19" fill="var(--fcol)" font-family="Times New Roman,serif" font-style="italic">y=f(x)</text>`;
+  if(k===0){
+    s+=`<text x="${(GX0+GX1)/2}" y="465" text-anchor="middle" font-size="22" fill="var(--muted)">y=f(x)의 개형은 내가 직접 만들어요</text>`;
+  }else{
+    // 부호 칸 (위)
+    st.ints.forEach((iv,i)=>{
+      const v=EX.signs[i],lab=v||'?',col=v==='+'?'var(--up)':v==='−'?'var(--down)':'var(--forest)';
+      const state=EX.bad['sign'+i]?'bad':k>=2?'ok':'';
+      s+=tokSvg((ivPx[i][0]+ivPx[i][1])/2,T[1]-26,52,lab,col,'sign',i,state);
+    });
+  }
+  if(k>=2){
+    // 화살표 칸 (아래)
+    st.ints.forEach((iv,i)=>{
+      const v=EX.arrows[i],lab=v==='up'?'↗':v==='down'?'↘':'?',col=v==='up'?'var(--up)':v==='down'?'var(--down)':'var(--forest)';
+      const state=EX.bad['arrow'+i]?'bad':k>=3?'ok':'';
+      s+=tokSvg((ivPx[i][0]+ivPx[i][1])/2,BT[0]+30,52,lab,col,'arrow',i,state);
+    });
+    // 나의 개형
+    if(EX.arrows.every(v=>v)){
+      const sk=sketch(st,xb);
+      s+=`<path d="${sk.path}" fill="none" stroke="var(--sketch)" stroke-width="${k>=4?3:5}" ${k>=4?'stroke-dasharray="10 7"':''} stroke-linecap="round"/>`;
+      if(k>=4){
+        const fR=sampleRange(st.f,st.fx,false),YF=y=>BT[1]-28-(y-fR[0])/(fR[1]-fR[0])*(BT[1]-BT[0]-90);
+        s+=`<clipPath id="cpB"><rect x="0" y="${BT[0]+56}" width="1000" height="${BT[1]-BT[0]-50}"/></clipPath>`;
+        s+=`<path clip-path="url(#cpB)" d="${pathOf(st.f,X,YF,xr,240)}" fill="none" stroke="var(--fcol)" stroke-width="4" stroke-linecap="round"/>`;
+      }
+      if(k>=3)st.roots.forEach((r,i)=>{
+        const py=sk.Y(sk.lev[i]);
+        const v=EX.pts[i],lab=v==='max'?'극대':v==='min'?'극소':v==='none'?'극값 아님':'?';
+        const col=v==='max'?'var(--max)':v==='min'?'var(--min)':v==='none'?'var(--muted)':'var(--forest)';
+        const state=EX.bad['pt'+i]?'bad':k>=4?'ok':'';
+        s+=`<circle cx="${xb[i]}" cy="${py}" r="7" fill="var(--panel)" stroke="var(--sketch)" stroke-width="3"/>`;
+        const ty=py+40>BT[1]-4?py-36:py+40;
+        s+=tokSvg(xb[i],ty,lab.length>2?104:76,lab,col,'pt',i,state);
+      });
+    }
+  }
+  $('exSvg').innerHTML=s;
+}
+// 화살표만으로 그린 개형: 경계점에서 기울기 0
+function sketch(st,xb){
+  const a=EX.arrows.map(v=>v==='up'?1:-1),n=xb.length;
+  const lev=[];if(n){lev[0]=0;for(let j=1;j<n;j++)lev[j]=lev[j-1]+a[j]}
+  const segs=[];
+  if(!n)segs.push({x0:GX0,x1:GX1,y0:-a[0],y1:a[0],t:'line'});
+  else{
+    segs.push({x0:GX0,x1:xb[0],y0:lev[0]-a[0],y1:lev[0],t:'L'});
+    for(let j=1;j<n;j++)segs.push({x0:xb[j-1],x1:xb[j],y0:lev[j-1],y1:lev[j],t:'I'});
+    segs.push({x0:xb[n-1],x1:GX1,y0:lev[n-1],y1:lev[n-1]+a[n],t:'R'});
+  }
+  let lo=Infinity,hi=-Infinity;segs.forEach(g=>{lo=Math.min(lo,g.y0,g.y1);hi=Math.max(hi,g.y0,g.y1)});
+  const top=BT[0]+66,bot=BT[1]-28,Y=v=>bot-(v-lo)/((hi-lo)||1)*(bot-top);
+  let p='';
+  segs.forEach((g,gi)=>{for(let i=0;i<=40;i++){const t=i/40,x=g.x0+(g.x1-g.x0)*t;
+    const v=g.t==='L'?g.y1+(g.y0-g.y1)*(1-t)*(1-t):g.t==='R'?g.y0+(g.y1-g.y0)*t*t:g.t==='I'?g.y0+(g.y1-g.y0)*(1-Math.cos(Math.PI*t))/2:g.y0+(g.y1-g.y0)*t;
+    p+=(p?'L':'M')+x.toFixed(1)+','+Y(v).toFixed(1)}});
+  return {path:p,lev,Y};
+}
+function tokClick(el){
+  const kind=el.dataset.tok,i=+el.dataset.i,k=EX.stage;
+  if(kind==='sign'&&k===1){EX.signs[i]=EX.signs[i]==='+'?'−':'+'}
+  else if(kind==='arrow'&&k===2){EX.arrows[i]=EX.arrows[i]==='up'?'down':'up'}
+  else if(kind==='pt'&&k===3){const o=['max','min','none'];EX.pts[i]=o[(o.indexOf(EX.pts[i])+1)%3]}
+  else return;
+  delete EX.bad[kind+i];$('fb').innerHTML='';draw();
+  const again=$('exSvg').querySelector(`[data-tok="${kind}"][data-i="${i}"]`);if(again)again.focus();
+}
+$('exSvg').addEventListener('click',e=>{const t=e.target.closest('[data-tok]');if(t)tokClick(t)});
+$('exSvg').addEventListener('keydown',e=>{const t=e.target.closest('[data-tok]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();tokClick(t)}});
+$('sSl').addEventListener('input',draw);$('wSl').addEventListener('input',draw);
+
+/* ===== 발견 노트 ===== */
+// 근 α, β, γ를 표시한 작은 그림 (표, 발견 노트용)
+let RTID=0;
+function rootThumb(st,M,which){
+  const W=200,H=130,pl=8,pr=10,pt=8,pb=28,xr=M.xr,id='rt'+(++RTID);
+  const X=x=>pl+(x-xr[0])/(xr[1]-xr[0])*(W-pl-pr);
+  const txt=(x,y,t,o)=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${(o&&o.fs)||19}" font-family="Times New Roman,serif" font-style="italic" fill="${(o&&o.c)||'var(--ink)'}" stroke="var(--panel)" stroke-width="4" paint-order="stroke">${t}</text>`;
+  let s=`<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><clipPath id="${id}"><rect x="0" y="${pt-6}" width="${W}" height="${H-pt-pb+12}"/></clipPath>`;
+  if(which==='d'){
+    const yr=M.dy,Y=y=>H-pb-(y-yr[0])/(yr[1]-yr[0])*(H-pt-pb),y0=Y(0);
+    s+=`<line x1="${pl-4}" y1="${y0}" x2="${W-pr+4}" y2="${y0}" stroke="var(--muted)" stroke-width="1.6"/><path d="M${W-pr+6},${y0} l-8,-4 v8z" fill="var(--muted)"/>`;
+    s+=`<path clip-path="url(#${id})" d="${pathOf(st.d,X,Y,xr,120)}" fill="none" stroke="var(--dcol)" stroke-width="3.4" stroke-linecap="round"/>`;
+    st.roots.forEach((r,i)=>{
+      const px=X(r.x),R=st.ints[i+1].s,L=st.ints[i].s;
+      s+=`<circle cx="${px}" cy="${y0}" r="3.6" fill="var(--dcol)"/>`;
+      if(L<0&&R<0)s+=txt(px,y0-8,r.n);               // 아래쪽에서 접할 때는 위에
+      else s+=txt(px+(R>0?10:-10),y0+20,r.n);         // 곡선을 피해 아래 옆에
+    });
+  }else{
+    const yr=sampleRange(st.f,st.fx,false),Y=y=>H-pb-(y-yr[0])/(yr[1]-yr[0])*(H-pt-pb);
+    st.roots.forEach(r=>{const px=X(r.x);s+=`<line x1="${px}" y1="${Y(st.f(r.x))}" x2="${px}" y2="${H-pb+6}" stroke="var(--muted)" stroke-width="1.3" stroke-dasharray="4 3"/>`});
+    s+=`<path clip-path="url(#${id})" d="${pathOf(st.f,X,Y,xr,120)}" fill="none" stroke="var(--fcol)" stroke-width="3.4" stroke-linecap="round"/>`;
+    st.roots.forEach(r=>{const px=X(r.x);s+=`<circle cx="${px}" cy="${Y(st.f(r.x))}" r="4.2" fill="var(--panel)" stroke="var(--fcol)" stroke-width="2.4"/>`+txt(px,H-7,r.n)});
+  }
+  return s+'</svg>';
+}
+function cardPics(mode,c){
+  const st=analyze(mode,c.s,c.w),M=MODE[mode];
+  return `<div class="pics">${rootThumb(st,M,'d')}${rootThumb(st,M,'f')}</div>`;
+}
+function renderNote(){
+  const m=EX.mode,F=DB.found[m],keys=Object.keys(F).sort((a,b)=>F[a].order-F[b].order);
+  let h=keys.map(cat=>{
+    const c=F[cat],C=CAT[m][cat];
+    const subs=m==='quart'&&cat==='d'?`<p>${c.subs.includes('L')?'<span class="badge">왼쪽에서 접함</span>':''}${c.subs.includes('R')?'<span class="badge">오른쪽에서 접함</span>':''}${c.subs.length<2?'<span class="badge" style="border-style:dashed">반대쪽에서 접하면?</span>':''}</p>`:'';
+    const sel=m==='quart'&&EX.cmp&&EX.cmp.has(cat);
+    const selBtn=m==='quart'&&showCompare()?`<button class="selBtn" data-cmp="${cat}" aria-pressed="${!!sel}">${sel?'선택됨':'비교할 카드로 선택'}</button>`:'';
+    return `<div class="dcard${sel?' sel':''}"><div class="no">발견 ${c.order}</div>${cardPics(m,c)}<p class="rel">${C.rel}</p><p><span class="m">f</span> ′(<span class="m">x</span>)=0의 근: ${C.root}</p><p>${C.ext}</p>${subs}${selBtn}</div>`;
+  }).join('');
+  if(DB.revealed[m])MODE[m].cats.filter(c=>!F[c]).forEach(c=>{h+=`<div class="dcard missing"><div class="no">? 아직 못 찾은 경우</div><p>힌트: ${CAT[m][c].hint}</p></div>`});
+  $('cards').innerHTML=h||'<p class="emptyNote">아직 기록이 없어요. 위에서 첫 번째 경우를 찾아 기록해 보세요.</p>';
+  $('allBtn').disabled=!keys.length;
+  $('allBtn').classList.toggle('hidden',DB.revealed[m]&&keys.length===MODE[m].cats.length);
+  const total=MODE[m].cats.length,got=keys.length;
+  let r='';
+  if(DB.revealed[m]){
+    r=got===total
+      ?`<div class="reveal"><b>${MODE[m].name}에서는 모두 ${total}가지 경우가 있어요. 전부 찾았어요!</b><br>`+(m==='cubic'?`왜 ${total}가지뿐일까요? 포물선과 <span class="m">x</span>축이 만나는 방법을 떠올려 보세요. 이차방정식 ${fp}=0의 판별식과 연결할 수 있어요.`:`굴곡이 있을 때와 없을 때 각각 <span class="m">x</span>축과 만나는 방법을 정리해 보세요.`)+'</div>'
+      :`<div class="reveal"><b>${MODE[m].name}에서는 모두 ${total}가지 경우가 있어요. 지금 ${got}가지를 찾았어요.</b> 점선 카드의 힌트를 보고 나머지를 찾아보세요.</div>`;
+  }
+  $('revealBox').innerHTML=r;
+  // 개형 비교 (사차함수)
+  let cp='';
+  if(m==='quart'&&showCompare()){
+    cp=`<div class="compare"><h2>개형 비교</h2><p class="hint" style="margin-bottom:6px">발견한 카드 중에서 <span class="m">y</span>=<span class="m">f</span>(<span class="m">x</span>)의 개형이 같은 두 카드를 골라 보세요.</p><div class="actions"><button class="primary" id="cmpBtn">확인</button></div><div class="fb" id="cmpFb">${DB.grouped?'<span class="ok">이미 찾았어요.</span> 삼중근일 때와 한 실근과 서로 다른 두 허근일 때는 부호가 −, + 로 같아서 개형도 같아요.':''}</div></div>`;
+  }
+  $('compareBox').innerHTML=cp;
+  if($('cmpBtn'))$('cmpBtn').onclick=checkCompare;
+  $('cards').querySelectorAll('[data-cmp]').forEach(b=>b.onclick=()=>{
+    EX.cmp=EX.cmp||new Set();const c=b.dataset.cmp;EX.cmp.has(c)?EX.cmp.delete(c):EX.cmp.add(c);renderNote();
+  });
+}
+function showCompare(){return Object.keys(DB.found.quart).length>=3}
+function checkCompare(){
+  const S=EX.cmp||new Set(),fb=$('cmpFb');
+  if(S.size!==2){fb.innerHTML='<span class="bad">카드 두 장을 골라 주세요.</span>';return}
+  if(S.has('t')&&S.has('1')){DB.grouped=true;save();fb.innerHTML=`<span class="ok">맞았어요!</span> 삼중근 ${A}일 때와 한 실근 ${A}와 서로 다른 두 허근일 때는 ${fp}의 부호가 모두 −, + 로 바뀌어서 개형이 같아요. 근의 종류는 달라도 <b>부호의 변화</b>가 같으면 개형이 같아요.`}
+  else fb.innerHTML=`<span class="bad">다시 골라 보세요.</span> 두 카드에서 극대와 극소의 개수, ${fp}의 부호가 바뀌는 순서를 비교해 보세요.`+(!DB.found.quart.t||!DB.found.quart['1']?' (아직 찾지 못한 경우가 있을 수도 있어요.)':'');
+}
+$('allBtn').onclick=()=>{DB.revealed[EX.mode]=true;save();renderNote();$('revealBox').scrollIntoView({block:'nearest',behavior:'smooth'})};
+
+/* ===== 3: 53쪽 표 ===== */
+const SHEET={
+  C:{mode:'cubic',cols:['2','d','0'],
+     rows:[
+      {k:'dg',h:`${fp}의 그래프`,auto:'d'},
+      {k:'D',h:'판별식',opts:['<span class="m">D</span>&gt;0','<span class="m">D</span>=0','<span class="m">D</span>&lt;0'],ans:[0,1,2],
+        q:c=>`포물선 <span class="m">y</span>=${fp}가 ${({'2':'<span class="m">x</span>축과 서로 다른 두 점에서 만날 때','d':'<span class="m">x</span>축에 접할 때','0':'<span class="m">x</span>축과 만나지 않을 때'})[c]}, 이차방정식 ${fp}=0의 판별식 <span class="m">D</span>는?`},
+      {k:'fg',h:'<span class="m">f</span>(<span class="m">x</span>)의 개형',auto:'f'},
+      {k:'mx',h:'극대',opts:[`${xm}=${A}에서 극대`,`${xm}=${B}에서 극대`,'없다'],ans:[0,2,2]},
+      {k:'mn',h:'극소',opts:[`${xm}=${A}에서 극소`,`${xm}=${B}에서 극소`,'없다'],ans:[1,2,2]},
+      {k:'one',h:'일대일대응',opts:['일대일대응이다','일대일대응이 아니다'],ans:[1,0,0]},
+      {k:'inc',h:'증가함수/감소함수',opts:['증가함수','감소함수','둘 다 아니다'],ans:[2,0,0]}]},
+  Q:{mode:'quart',cols:['3','d','t','1'],
+     rows:[
+      {k:'dg',h:`${fp}의 그래프`,auto:'d'},
+      {k:'fg',h:'<span class="m">f</span>(<span class="m">x</span>)의 개형',auto:'f'},
+      {k:'mx',h:'극대',opts:[`${xm}=${A}에서 극대`,`${xm}=${B}에서 극대`,`${xm}=${G}에서 극대`,'없다'],ans:[1,3,3,3]},
+      {k:'mn',h:'극소',opts:[`${xm}=${A}, ${xm}=${G}에서 극소`,`${xm}=${A}에서 극소`,`${xm}=${B}에서 극소`,'없다'],ans:[0,1,1,1]}]}
+};
+Object.entries(SHEET).forEach(([key,T])=>{
+  const saved=DB.sheet[key];
+  T.val=(saved&&saved.length===T.rows.length)?saved:T.rows.map(()=>T.cols.map(()=>null));T.mark=false;
+  const sr=DB.sheetRev&&DB.sheetRev[key];T.rev=(sr&&sr.length===T.rows.length)?sr:T.rows.map(()=>T.cols.map(()=>false));
+});
+function renderSheet(key){
+  const T=SHEET[key],F=DB.found[T.mode],tb=$(key==='C'?'sheetC':'sheetQ');
+  let h=`<tr><th class="rowh"><span class="m">f</span> ′(<span class="m">x</span>)=0의 근</th>${T.cols.map(c=>`<th>${F[c]?CAT[T.mode][c].root:'?'}</th>`).join('')}</tr>`;
+  T.rows.forEach((r,ri)=>{
+    h+=`<tr><th class="rowh">${r.h}</th>`;
+    T.cols.forEach((c,ci)=>{
+      if(!F[c]){h+=`<td class="lock">${ri===0?(T.mode==='cubic'?'1':'2')+'번에서 찾아 보세요':''}</td>`;return}
+      if(r.auto){
+        const st=analyze(T.mode,F[c].s,F[c].w),M=MODE[T.mode];
+        h+=`<td class="auto">${rootThumb(st,M,r.auto)}</td>`;return;
+      }
+      const v=T.val[ri][ci],rv=T.rev[ri][ci]&&v===r.ans[ci],stt=rv?' shown':T.mark?(v===r.ans[ci]?' right':' wrong'):'';
+      h+=`<td><button class="cellBtn${v!==null?' filled':''}${stt}" data-t="${key}" data-r="${ri}" data-c="${ci}">${v!==null?r.opts[v]:'<span class="ph">눌러서 고르기</span>'}${rv?'<span class="shownTag">정답 확인</span>':''}</button></td>`;
+    });
+    h+='</tr>';
+  });
+  tb.innerHTML=h;
+}
+let pickCtx=null;
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.cellBtn');if(!b)return;
+  const T=SHEET[b.dataset.t],r=T.rows[+b.dataset.r],ci=+b.dataset.c;
+  pickCtx={key:b.dataset.t,ri:+b.dataset.r,ci};
+  $('pickTitle').innerHTML=r.q?r.q(T.cols[ci]):`${CAT[T.mode][T.cols[ci]].root}일 때 : ${r.h}`;
+  $('pickOpts').innerHTML=r.opts.map((o,i)=>`<button data-i="${i}">${o}</button>`).join('');
+  $('picker').showModal();
+});
+$('pickOpts').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||!pickCtx)return;
+  const T=SHEET[pickCtx.key];T.val[pickCtx.ri][pickCtx.ci]=+b.dataset.i;T.mark=false;
+  saveSheet();$('sheetScore').textContent='';renderSheet(pickCtx.key);$('picker').close();
+});
+$('pickClear').onclick=()=>{if(!pickCtx)return;const T=SHEET[pickCtx.key];T.val[pickCtx.ri][pickCtx.ci]=null;T.mark=false;saveSheet();renderSheet(pickCtx.key);$('picker').close()};
+$('pickClose').onclick=()=>$('picker').close();
+function saveSheet(){DB.sheet={C:SHEET.C.val,Q:SHEET.Q.val};DB.sheetRev={C:SHEET.C.rev,Q:SHEET.Q.rev};save()}
+function eachCell(fn){Object.entries(SHEET).forEach(([k,T])=>{const F=DB.found[T.mode];T.rows.forEach((r,ri)=>{if(r.auto)return;T.cols.forEach((c,ci)=>{if(F[c])fn(T,r,ri,ci)})})})}
+$('gradeBtn').onclick=()=>{
+  let ok=0,all=0,empty=0,shown=0;
+  eachCell((T,r,ri,ci)=>{all++;const v=T.val[ri][ci];if(v===null)empty++;else if(T.rev[ri][ci]&&v===r.ans[ci])shown++;else if(v===r.ans[ci])ok++});
+  Object.values(SHEET).forEach(T=>T.mark=true);renderSheet('C');renderSheet('Q');
+  const lockedCnt=SHEET.C.cols.filter(c=>!DB.found.cubic[c]).length+SHEET.Q.cols.filter(c=>!DB.found.quart[c]).length;
+  if(!all){$('sheetScore').textContent='먼저 1, 2번에서 경우를 찾아 기록하세요.';return}
+  $('sheetScore').innerHTML=`${all}칸 중 <span style="color:var(--ok)">${ok}칸</span> 맞았어요.`+(empty?` <span style="color:var(--warn)">(빈칸 ${empty}칸)</span>`:'')+(shown?` <span style="color:var(--warn)">(정답 보기로 확인한 ${shown}칸은 점수에서 빠져요)</span>`:'')+(shown?'':ok===all?(lockedCnt?` 아직 찾지 못한 경우가 ${lockedCnt}가지 남았어요.`:' 모두 맞혔어요! 학습지에 옮겨 적어 보세요.'):empty?' 빈칸을 채우고 다시 채점해 보세요.':' 빨간 칸을 다시 생각해 본 뒤, 그래도 모르겠으면 정답 보기를 누르세요.');
+};
+$('showAnsBtn').onclick=()=>{
+  let all=0,empty=0,wrong=0,graded=true;
+  eachCell((T,r,ri,ci)=>{all++;const v=T.val[ri][ci];if(v===null)empty++;else if(v!==r.ans[ci])wrong++;if(!T.mark)graded=false});
+  if(!all){$('sheetScore').textContent='먼저 1, 2번에서 경우를 찾아 기록하세요.';return}
+  if(empty||!graded){$('sheetScore').innerHTML='<span style="color:var(--warn)">먼저 모든 칸을 채우고 채점하기를 눌러 주세요.</span> 정답은 채점한 뒤에 볼 수 있어요.';return}
+  if(!wrong){$('sheetScore').textContent='틀린 칸이 없어요. 고칠 정답이 없어요.';return}
+  eachCell((T,r,ri,ci)=>{if(T.val[ri][ci]!==r.ans[ci]){T.val[ri][ci]=r.ans[ci];T.rev[ri][ci]=true}});
+  saveSheet();renderSheet('C');renderSheet('Q');
+  $('sheetScore').innerHTML=`틀린 ${wrong}칸에 정답을 보여 줬어요. <span style="color:var(--warn)">점선 칸</span>은 왜 그 답인지 1, 2번 화면에서 다시 확인해 보세요.`;
+};
+$('clearBtn').onclick=()=>{Object.values(SHEET).forEach(T=>{T.val=T.rows.map(()=>T.cols.map(()=>null));T.rev=T.rows.map(()=>T.cols.map(()=>false));T.mark=false});saveSheet();renderSheet('C');renderSheet('Q');$('sheetScore').textContent=''};
+
+/* ===== 선생님용 ===== */
+// 제목 표지판을 3초 안에 5번 누르면 선생님용 줄이 나타나거나 숨겨져요
+(function(){let taps=[];document.querySelector('.sign').addEventListener('click',()=>{
+  const now=Date.now();taps=taps.filter(t=>now-t<3000);taps.push(now);
+  if(taps.length>=5){taps=[];const t=$('teacher');t.classList.toggle('hidden');$('tFb').innerHTML='';if(!t.classList.contains('hidden'))t.scrollIntoView({block:'nearest',behavior:'smooth'})}
+})})();
+$('tHide').onclick=()=>{$('teacher').classList.add('hidden');$('tFb').innerHTML=''};
+function tAsk(msg,fn){
+  $('tFb').innerHTML=`${msg}<div class="actions" style="margin-top:6px"><button class="primary" id="tYes">네</button><button id="tNo">아니요</button></div>`;
+  $('tYes').onclick=()=>{fn();};$('tNo').onclick=()=>{$('tFb').innerHTML=''};$('tNo').focus();
+}
+$('tFill').onclick=()=>tAsk('발견 노트와 53쪽 표를 모두 채울까요? (시연용)',()=>{
+  const r0=Math.sqrt(1.8/3),m0=(2*1.8/3)*r0;
+  DB.found.cubic={'2':{s:-0.8,w:0,subs:[],order:1},'d':{s:0,w:0,subs:[],order:2},'0':{s:0.6,w:0,subs:[],order:3}};
+  DB.found.quart={'3':{s:0,w:1.8,subs:[],order:1},'d':{s:m0,w:1.8,subs:['R','L'],order:2},'t':{s:0,w:0,subs:[],order:3},'1':{s:0.5,w:0.6,subs:[],order:4}};
+  DB.revealed={cubic:true,quart:true};eachCell((T,r,ri,ci)=>{T.val[ri][ci]=r.ans[ci];T.rev[ri][ci]=false});Object.values(SHEET).forEach(T=>T.mark=false);saveSheet();save();renderNote();renderSheet('C');renderSheet('Q');
+  $('tFb').innerHTML='<span class="ok">발견 노트와 53쪽 표를 모두 채웠어요.</span>';
+});
+$('tReset').onclick=()=>tAsk('이 기기에 저장된 발견 노트와 표 기록을 모두 지울까요?',()=>{
+  DB={found:{cubic:{},quart:{}},revealed:{cubic:false,quart:false},grouped:false,sheet:{C:null,Q:null}};
+  Object.values(SHEET).forEach(T=>{T.val=T.rows.map(()=>T.cols.map(()=>null));T.rev=T.rows.map(()=>T.cols.map(()=>false));T.mark=false});
+  EX.cmp=new Set();save();renderNote();renderSheet('C');renderSheet('Q');toStage(0);
+  $('tFb').innerHTML='<span class="ok">기록을 모두 지웠어요.</span>';
+});
+
+/* ===== 4: 퀴즈 ===== */
+const jit=(v,a)=>v+(Math.random()*2-1)*a;
+function randCubic(type){
+  if(type===0){const a=jit(-1,0.3),b=jit(1,0.3);return {fn:makeFn([a,b],null,1),xr:[a-1.1,b+1.1],type}}
+  if(type===1){const a=jit(0.2,0.4);return {fn:makeFn([a,a],null,1),xr:[a-1.8,a+1.8],type}}
+  const a=jit(0.2,0.4),k=jit(1.3,0.3);return {fn:makeFn([],[a*a+k,-2*a,1],1),xr:[a-1.9,a+1.9],type};
+}
+function randQuart(type){
+  if(type===0){const a=jit(-1.4,0.2),b=jit(-0.1,0.25),g=jit(1.2,0.2);return {fn:makeFn([a,b,g],null,1),xr:[a-0.5,g+0.55],dfx:[a-0.25,g+0.25],type}}
+  if(type===1){const a=jit(-1.1,0.2),b=jit(0.7,0.2);return {fn:makeFn([a,b,b],null,1),xr:[a-0.65,b+0.75],dfx:[a-0.25,b+0.45],type}}
+  if(type===2){const b=jit(-0.7,0.2),a=jit(1.1,0.2);return {fn:makeFn([a,b,b],null,1),xr:[b-0.75,a+0.65],dfx:[b-0.45,a+0.25],type}}
+  if(type===3){const a=jit(0.2,0.3);return {fn:makeFn([a,a,a],null,1),xr:[a-1.4,a+1.4],type:3}}
+  const a=jit(1.0,0.15),p=a-1.2;return {fn:makeFn([a],[p*p+0.12,-2*p,1],1),xr:[a-2.2,a+0.95],dfx:[a-1.9,a+0.25],type:3,imag:true};
+}
+const CUBIC_F_LABEL=['극대와 극소가 있다','증가, 한 점에서 평평','계속 증가','아래로 볼록한 곡선'];
+const OX=[
+  {q:`<span class="m">f</span> ′(<span class="m">a</span>)=0이면 함수 <span class="m">f</span>(<span class="m">x</span>)는 <span class="m">x</span>=<span class="m">a</span>에서 반드시 극값을 갖는다.`,a:false,e:`<span class="m">f</span>(<span class="m">x</span>)=<span class="m">x</span><sup>3</sup>은 <span class="m">f</span> ′(0)=0이지만 <span class="m">x</span>=0의 좌우에서 <span class="m">f</span> ′(<span class="m">x</span>)의 부호가 +로 같아서 극값을 갖지 않아요.`},
+  {q:`최고차항의 계수가 양수인 삼차함수 <span class="m">f</span>(<span class="m">x</span>)가 실수 전체에서 증가하려면 이차방정식 <span class="m">f</span> ′(<span class="m">x</span>)=0의 판별식 <span class="m">D</span>가 <span class="m">D</span>&lt;0이어야 한다.`,a:false,e:`<span class="m">D</span>=0(중근)일 때도 실수 전체에서 증가하므로 조건은 <span class="m">D</span>≤0이에요.`},
+  {q:`<span class="m">y</span>=<span class="m">f</span> ′(<span class="m">x</span>)의 그래프의 꼭짓점의 <span class="m">x</span>좌표에서 <span class="m">f</span>(<span class="m">x</span>)는 극값을 갖는다.`,a:false,e:`극값은 <span class="m">f</span> ′(<span class="m">x</span>)의 부호가 바뀌는 곳, 즉 <span class="m">y</span>=<span class="m">f</span> ′(<span class="m">x</span>)의 그래프가 <span class="m">x</span>축을 뚫고 지나가는 곳에서 생겨요. 꼭짓점의 위치와는 관계없어요.`},
+  {q:`최고차항의 계수가 양수인 사차함수는 반드시 극솟값을 갖는다.`,a:true,e:`53쪽 표의 네 경우 모두 <span class="m">f</span> ′(<span class="m">x</span>)의 부호가 −에서 +로 바뀌는 곳이 있으므로 극솟값을 가져요.`},
+  {q:`최고차항의 계수가 양수인 사차함수 <span class="m">f</span>(<span class="m">x</span>)에서 방정식 <span class="m">f</span> ′(<span class="m">x</span>)=0이 삼중근 ${A}를 가지면 <span class="m">f</span>(<span class="m">x</span>)는 극값을 갖지 않는다.`,a:false,e:`${A}의 좌우에서 <span class="m">f</span> ′(<span class="m">x</span>)의 부호가 −에서 +로 바뀌므로 <span class="m">x</span>=${A}에서 극소예요.`},
+  {q:`최고차항의 계수가 양수인 삼차함수가 극값을 가지면 극댓값과 극솟값을 모두 갖는다.`,a:true,e:`극값을 가지려면 <span class="m">f</span> ′(<span class="m">x</span>)=0이 서로 다른 두 실근을 가져야 하고, 이때 부호가 +, −, +로 바뀌어 극대와 극소가 모두 생겨요.`},
+  {q:`최고차항의 계수가 양수인 사차함수 <span class="m">f</span>(<span class="m">x</span>)에서 방정식 <span class="m">f</span> ′(<span class="m">x</span>)=0이 한 실근과 중근을 가지면 <span class="m">f</span>(<span class="m">x</span>)는 극댓값을 갖지 않는다.`,a:true,e:`중근에서는 부호가 바뀌지 않으므로 부호가 바뀌는 곳은 한 실근 하나뿐이고, 그곳에서 −에서 +로 바뀌어 극소만 생겨요.`}
+];
+const signTxt=t=>({c0:'+, −, +',c1:'+, +',c2:'항상 +',q0:'−, +, −, +',q1:'−, +, +',q2:'−, −, +',q3:'−, +'})[t];
+function makeQuiz(){
+  const qs=[];
+  // A: 삼차 f' → f
+  shuffle([0,1,2]).forEach(t=>{
+    const R=randCubic(t);
+    const opts=[0,1,2].map(i=>{const r=randCubic(i);return {svg:thumb(r.fn.f,r.xr),ok:i===t}});
+    opts.push({svg:thumb(R.fn.d,R.xr,{color:'var(--fcol)'}),ok:false,trap:true});
+    qs.push({kind:'A',fig:thumb(R.fn.d,R.xr,{axis:true,color:'var(--dcol)',sw:1.8}),opts:shuffle(opts),
+      text:'최고차항의 계수가 양수인 삼차함수 <span class="m">f</span>(<span class="m">x</span>)의 도함수 <span class="m">y</span>=<span class="m">f</span> ′(<span class="m">x</span>)의 그래프가 다음과 같아요. <span class="m">y</span>=<span class="m">f</span>(<span class="m">x</span>)의 그래프의 개형은?',
+      exp:`<span class="m">f</span> ′(<span class="m">x</span>)의 부호가 ${signTxt('c'+t)} 이므로 `+['증가 → 감소 → 증가하여 극대와 극소가 모두 있어요.','계속 증가하고, <span class="m">f</span> ′(<span class="m">x</span>)=0인 점에서만 잠깐 평평해요. 극값은 없어요.','실수 전체에서 증가하고 극값이 없어요.'][t]+' 아래로 볼록한 곡선을 골랐다면 <span class="m">f</span> ′(<span class="m">x</span>)의 그래프를 그대로 옮긴 것이에요.'});
+  });
+  qs.splice(3);
+  // B: 삼차 f → f'
+  shuffle([0,1,2]).slice(0,2).forEach(t=>{
+    const R=randCubic(t);
+    const opts=[0,1,2].map(i=>{const r=randCubic(i);return {svg:thumb(r.fn.d,r.xr,{axis:true,color:'var(--dcol)'}),ok:i===t}});
+    const r0=randCubic(0); // 위로 볼록한 포물선(최고차항의 계수가 음수) 함정 보기
+   opts.push({svg:thumb(x=>-r0.fn.d(x),r0.xr,{axis:true,color:'var(--dcol)'}),ok:false});
+    qs.push({kind:'B',fig:thumb(R.fn.f,R.xr,{sw:1.8}),opts:shuffle(opts),
+      text:'최고차항의 계수가 양수인 삼차함수 <span class="m">y</span>=<span class="m">f</span>(<span class="m">x</span>)의 그래프의 개형이 다음과 같아요. 도함수 <span class="m">y</span>=<span class="m">f</span> ′(<span class="m">x</span>)의 그래프는?',
+      exp:['증가 → 감소 → 증가이므로 <span class="m">f</span> ′(<span class="m">x</span>)의 부호는 +, −, +이고, <span class="m">x</span>축과 서로 다른 두 점에서 만나요.','계속 증가하다가 한 점에서 평평하므로 <span class="m">f</span> ′(<span class="m">x</span>)≥0이고, <span class="m">x</span>축과 한 점에서 접해요.','계속 증가하고 평평한 점이 없으므로 모든 <span class="m">x</span>에서 <span class="m">f</span> ′(<span class="m">x</span>)&gt;0이에요. <span class="m">x</span>축과 만나지 않아요.'][t]+' 최고차항의 계수가 양수이면 <span class="m">f</span> ′(<span class="m">x</span>)는 아래로 볼록한 포물선이에요.'});
+  });
+  // C: 사차 f' → f
+  shuffle([0,1,2,3,4]).slice(0,3).forEach(t=>{
+    const R=randQuart(t),ans=R.type;
+    const opts=[0,1,2,3].map(i=>{const r=randQuart(i);return {svg:thumb(r.fn.f,r.xr),ok:i===ans}});
+    qs.push({kind:'C',fig:thumb(R.fn.d,R.xr,{axis:true,color:'var(--dcol)',sw:1.8,fx:R.dfx}),opts:shuffle(opts),
+      text:'최고차항의 계수가 양수인 사차함수 <span class="m">f</span>(<span class="m">x</span>)의 도함수 <span class="m">y</span>=<span class="m">f</span> ′(<span class="m">x</span>)의 그래프가 다음과 같아요. <span class="m">y</span>=<span class="m">f</span>(<span class="m">x</span>)의 그래프의 개형은?',
+      exp:`<span class="m">f</span> ′(<span class="m">x</span>)의 부호가 ${signTxt('q'+ans)} 순서로 나타나요. `+[
+        '감소 → 증가 → 감소 → 증가이므로 극소, 극대, 극소가 차례로 나타나요.',
+        '왼쪽 근에서 −에서 +로 바뀌어 극소가 되고, 오른쪽 접하는 점(중근)에서는 부호가 바뀌지 않아 평평하게 지나가요.',
+        '왼쪽 접하는 점(중근)에서는 부호가 −로 그대로여서 평평하게 지나가고, 오른쪽 근에서 −에서 +로 바뀌어 극소가 돼요.',
+        (R.imag?'<span class="m">x</span>축과 한 점에서만 만나므로(한 실근과 서로 다른 두 허근) ':'삼중근이지만 ')+'그 점에서 −에서 +로 바뀌어 극소 하나만 있어요.'][ans]});
+  });
+  // D: OX
+  shuffle(OX).slice(0,2).forEach(o=>qs.push({kind:'D',text:o.q,ox:o}));
+  const order=[qs[0],qs[3],qs[5],qs[1],qs[8],qs[6],qs[4],qs[2],qs[7],qs[9]];
+  return order.filter(Boolean);
+}
+const QZ={list:[],i:0,score:0,done:false,wrong:[]};
+function startQuiz(){QZ.list=makeQuiz();QZ.i=0;QZ.score=0;QZ.answered=false;QZ.wrong=[];renderQ()}
+function renderQ(){
+  const box=$('quizCard'),n=QZ.list.length;
+  if(QZ.i>=n){
+    const msg=QZ.score===n?'모두 맞혔어요!':QZ.score>=n*0.7?'잘했어요. 틀린 문제만 다시 확인해 보세요.':'1, 2번 화면에서 부호와 개형을 다시 살펴본 뒤 도전해 보세요.';
+    box.innerHTML=`<div class="final"><h2>결과</h2><div class="big">${QZ.score} / ${n}</div><p>${msg}</p>${QZ.wrong.length?'<ol class="reviewList">'+QZ.wrong.map(w=>`<li>${w}</li>`).join('')+'</ol>':''}<button class="primary" id="qRestart">새 문제로 다시 풀기</button></div>`;
+    $('qRestart').onclick=startQuiz;return;
+  }
+  const q=QZ.list[QZ.i];
+  let h=`<div class="qMeta"><span>${QZ.i+1}번 / ${n}문제</span><span>맞힌 개수 ${QZ.score}</span></div><div class="progress"><div style="width:${QZ.i/n*100}%"></div></div>`;
+  h+=`<p class="qText">${q.kind==='D'?'다음 문장이 옳으면 O, 옳지 않으면 X를 고르세요.<br>':''}${q.text}</p>`;
+  if(q.fig)h+=`<div class="qFig">${q.fig}</div>`;
+  if(q.kind==='D')h+=`<div class="opts"><button data-i="1" style="font-size:30px">O</button><button data-i="0" style="font-size:30px">X</button></div>`;
+  else h+=`<div class="opts">${q.opts.map((o,i)=>`<button data-i="${i}" aria-label="보기 ${i+1}">${o.svg}<span>보기 ${i+1}</span></button>`).join('')}</div>`;
+  h+=`<div id="qFb"></div>`;
+  box.innerHTML=h;
+  box.querySelectorAll('.opts button').forEach(b=>b.onclick=()=>answer(+b.dataset.i,b));
+}
+function answer(i,btn){
+  if(QZ.answered)return;QZ.answered=true;
+  const q=QZ.list[QZ.i],btns=[...$('quizCard').querySelectorAll('.opts button')];
+  let ok,exp;
+  if(q.kind==='D'){ok=(i===1)===q.ox.a;exp=`정답은 <b>${q.ox.a?'O':'X'}</b>예요. ${q.ox.e}`;btns.forEach(b=>{if((+b.dataset.i===1)===q.ox.a)b.classList.add('right')})}
+  else{ok=q.opts[i].ok;exp=q.exp;btns.forEach((b,k)=>{if(q.opts[k].ok)b.classList.add('right')})}
+  if(!ok)btn.classList.add('wrong');
+  btns.forEach(b=>b.disabled=true);btns.forEach(b=>b.style.opacity=1);
+  if(ok)QZ.score++;else QZ.wrong.push(`${QZ.i+1}번: ${exp}`);
+  $('qFb').innerHTML=`<div class="feedback"><p style="margin:0 0 6px">${ok?'<span class="ok">맞았어요.</span>':'<span class="bad">다시 생각해 봐요.</span>'} ${exp}</p><button class="primary" id="qNext">${QZ.i+1<QZ.list.length?'다음 문제':'결과 보기'}</button></div>`;
+  $('qNext').onclick=()=>{QZ.i++;QZ.answered=false;renderQ()};
+  $('qNext').focus();
+}
+
+
+/* ===== 탭 ===== */
+const tabs=[...document.querySelectorAll('nav.tabs button')];
+function showTab(t){
+  tabs.forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  $('explore').classList.toggle('hidden',!(t==='cubic'||t==='quart'));
+  $('sheet').classList.toggle('hidden',t!=='sheet');
+  $('quiz').classList.toggle('hidden',t!=='quiz');
+  if(t==='cubic'||t==='quart')setMode(t);
+  if(t==='sheet'){renderSheet('C');renderSheet('Q')}
+  if(t==='quiz'&&!QZ.list.length)startQuiz();
+}
+tabs.forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+renderSheet('C');renderSheet('Q');
+setMode('cubic');
+})();
+</script>
+</body>
+</html>
