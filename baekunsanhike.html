@@ -237,7 +237,7 @@ const gNb=el('g',{});
 const gFlags=el('g',{});
 const hiker=el('g',{});
 el('circle',{r:7,fill:'var(--panel)',stroke:'var(--ink)','stroke-width':3},hiker);
-const hk=el('text',{x:0,y:-14,'text-anchor':'middle','font-size':26},hiker);hk.textContent='🚶';
+const hk=el('text',{x:0,y:-14,'text-anchor':'middle','font-size':26,transform:'scale(-1,1)'},hiker);hk.textContent='🚶';
 
 // ===== 상태 =====
 let step=0, maxReached=0, revealed=false;
