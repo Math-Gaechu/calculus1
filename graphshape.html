@@ -514,7 +514,7 @@ function draw(){
         const v=EX.pts[i],lab=v==='max'?'극대':v==='min'?'극소':v==='none'?'극값 아님':'?';
         const col=v==='max'?'var(--max)':v==='min'?'var(--min)':v==='none'?'var(--muted)':'var(--forest)';
         const state=EX.bad['pt'+i]?'bad':k>=4?'ok':'';
-        s+=`<circle cx="${xb[i]}" cy="${py}" r="7" fill="var(--panel)" stroke="var(--sketch)" stroke-width="3"/>`;
+        s+=`<circle cx="${xb[i]}" cy="${py}" r="7" fill="var(--sketch)"/>`;
         const ty=py+40>BT[1]-4?py-36:py+40;
         s+=tokSvg(xb[i],ty,lab.length>2?104:76,lab,col,'pt',i,state);
       });
@@ -576,7 +576,7 @@ function rootThumb(st,M,which){
     const yr=sampleRange(st.f,st.fx,false),Y=y=>H-pb-(y-yr[0])/(yr[1]-yr[0])*(H-pt-pb);
     st.roots.forEach(r=>{const px=X(r.x);s+=`<line x1="${px}" y1="${Y(st.f(r.x))}" x2="${px}" y2="${H-pb+6}" stroke="var(--muted)" stroke-width="1.3" stroke-dasharray="4 3"/>`});
     s+=`<path clip-path="url(#${id})" d="${pathOf(st.f,X,Y,xr,120)}" fill="none" stroke="var(--fcol)" stroke-width="3.4" stroke-linecap="round"/>`;
-    st.roots.forEach(r=>{const px=X(r.x);s+=`<circle cx="${px}" cy="${Y(st.f(r.x))}" r="4.2" fill="var(--panel)" stroke="var(--fcol)" stroke-width="2.4"/>`+txt(px,H-7,r.n)});
+    st.roots.forEach(r=>{const px=X(r.x);s+=`<circle cx="${px}" cy="${Y(st.f(r.x))}" r="4.2" fill="var(--fcol)"/>`+txt(px,H-7,r.n)});
   }
   return s+'</svg>';
 }
